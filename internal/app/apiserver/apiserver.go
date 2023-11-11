@@ -5,12 +5,14 @@ import (
 	"github.com/sirupsen/logrus"
 	"io"
 	"net/http"
+	"rest-api/internal/app/nlab"
 )
 
 type APIServer struct {
 	config *Config
 	logger *logrus.Logger
 	router *mux.Router
+	nlab   *nlab.Nlab
 }
 
 func New(config *Config) *APIServer {
@@ -27,6 +29,10 @@ func (s *APIServer) Start() error {
 	}
 
 	s.configureRouter()
+
+	if err := s.configureNlab(); err != nil {
+		return err
+	}
 
 	s.logger.Info("Starting api server")
 	return http.ListenAndServe(s.config.BindAddr, s.router)
@@ -45,6 +51,16 @@ func (s *APIServer) configureLogger() error {
 
 func (s *APIServer) configureRouter() {
 	s.router.HandleFunc("/hello", s.handleHello())
+}
+
+func (s *APIServer) configureNlab() error {
+	nl := nlab.New(s.config.Nlab)
+	if err := nl.Open(); err != nil {
+		return err
+	}
+
+	s.nlab = nl
+	return nil
 }
 
 func (s *APIServer) handleHello() http.HandlerFunc {
