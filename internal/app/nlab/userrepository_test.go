@@ -10,12 +10,7 @@ import (
 func TestUserRepository_Create(t *testing.T) {
 	s, teardown := nlab.Testnlab(t, databaseURL)
 	defer teardown("usr")
-	u, err := s.User().Create(&model.User{
-		Login:  "kostia",
-		Pass:   "admin",
-		Text:   "Ян Константин Эдуардович",
-		Status: 1,
-	})
+	u, err := s.User().Create(model.TestUser(t))
 	assert.NoError(t, err)
 	assert.NotNil(t, u)
 }
@@ -27,15 +22,10 @@ func TestUserRepository_FindByLogin(t *testing.T) {
 	login := "kostia"
 	_, err := s.User().FindByLogin(login)
 	assert.Error(t, err)
-
-	s.User().Create(&model.User{
-		Login:  "kostia",
-		Pass:   "admin",
-		Text:   "Ян Константин Эдуардович",
-		Status: 1,
-	})
-
-	u, err := s.User().FindByLogin(login)
+	u := model.TestUser(t)
+	u.Login = login
+	s.User().Create(u)
+	u, err = s.User().FindByLogin(login)
 	assert.NoError(t, err)
 	assert.NotNil(t, u)
 
