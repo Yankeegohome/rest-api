@@ -1,4 +1,4 @@
-package nlab_test
+package sqlnlab_test
 
 import (
 	"os"

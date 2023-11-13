@@ -1,28 +1,29 @@
-package nlab
+package sqlnlab
 
-import "rest-api/internal/app/model"
+import (
+	"database/sql"
+	"rest-api/internal/app/model"
+	"rest-api/internal/app/nlab"
+)
 
 type UserRepository struct {
 	nlab *Nlab
 }
 
-func (r *UserRepository) Create(u *model.User) (*model.User, error) {
+func (r *UserRepository) Create(u *model.User) error {
 	if err := u.Validate(); err != nil {
-		return nil, err
+		return err
 	}
 	if err := u.BeforeCreate(); err != nil {
-		return nil, err
+		return err
 	}
-	if err := r.nlab.db.QueryRow(
+	return r.nlab.db.QueryRow(
 		"INSERT INTO NLAB.USR(ID, LOGIN, PASS, TEXT, STATUS) VALUES (nextval('nlab.s_usr'), $1, $2, $3, $4) RETURNING id",
 		u.Login,
 		u.Pass,
 		u.Text,
 		1,
-	).Scan(&u.ID); err != nil {
-		return nil, err
-	}
-	return u, nil
+	).Scan(&u.ID)
 }
 
 func (r *UserRepository) FindByLogin(login string) (*model.User, error) {
@@ -36,6 +37,9 @@ func (r *UserRepository) FindByLogin(login string) (*model.User, error) {
 		&u.Text,
 		&u.Pass,
 	); err != nil {
+		if err == sql.ErrNoRows {
+			return nil, nlab.ErrRecordNotFound
+		}
 		return nil, err
 	}
 	return u, nil
