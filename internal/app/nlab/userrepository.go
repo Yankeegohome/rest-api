@@ -7,6 +7,12 @@ type UserRepository struct {
 }
 
 func (r *UserRepository) Create(u *model.User) (*model.User, error) {
+	if err := u.Validate(); err != nil {
+		return nil, err
+	}
+	if err := u.BeforeCreate(); err != nil {
+		return nil, err
+	}
 	if err := r.nlab.db.QueryRow(
 		"INSERT INTO NLAB.USR(ID, LOGIN, PASS, TEXT, STATUS) VALUES (nextval('nlab.s_usr'), $1, $2, $3, $4) RETURNING id",
 		u.Login,
