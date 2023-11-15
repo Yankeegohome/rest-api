@@ -6,17 +6,17 @@ import (
 )
 
 type User struct {
-	ID        int
-	Login     string
-	Pass      string
-	Text      string
-	Passoword string
-	Status    int
+	ID       int    `json:"id"`
+	Login    string `json:"login"`
+	Pass     string `json:"-"`
+	Text     string `json:"name"`
+	Password string `json:"password,omitempty"`
+	Status   int    `json:"-"`
 }
 
 func (u *User) BeforeCreate() error {
-	if len(u.Passoword) > 0 {
-		enc, err := encryptString(u.Passoword)
+	if len(u.Password) > 0 {
+		enc, err := encryptString(u.Password)
 		if err != nil {
 			return err
 		}
@@ -25,6 +25,13 @@ func (u *User) BeforeCreate() error {
 	return nil
 }
 
+func (u *User) Sanitaze() {
+	u.Password = ""
+}
+
+func (u *User) ComparePassord(password string) bool {
+	return bcrypt.CompareHashAndPassword([]byte(u.Pass), []byte(password)) == nil
+}
 func encryptString(s string) (string, error) {
 	b, err := bcrypt.GenerateFromPassword([]byte(s), bcrypt.MinCost)
 	if err != nil {
@@ -37,6 +44,6 @@ func (u *User) Validate() error {
 	return validation.ValidateStruct(
 		u,
 		validation.Field(&u.Login, validation.Required),
-		validation.Field(&u.Passoword, validation.By(requiredIf(u.Pass == "")), validation.Length(6, 100)),
+		validation.Field(&u.Password, validation.By(requiredIf(u.Pass == "")), validation.Length(6, 100)),
 	)
 }
