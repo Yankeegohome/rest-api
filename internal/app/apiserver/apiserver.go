@@ -2,6 +2,7 @@ package apiserver
 
 import (
 	"database/sql"
+	"github.com/gorilla/sessions"
 	"net/http"
 	"rest-api/internal/app/nlab/sqlnlab"
 )
@@ -14,7 +15,8 @@ func Start(config *Config) error {
 
 	defer db.Close()
 	nlab := sqlnlab.New(db)
-	srv := newServer(nlab)
+	sessionNlab := sessions.NewCookieStore([]byte(config.SessionKey))
+	srv := newServer(nlab, sessionNlab)
 	return http.ListenAndServe(config.BindAddr, srv)
 }
 

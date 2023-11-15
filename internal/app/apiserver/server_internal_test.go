@@ -3,6 +3,7 @@ package apiserver
 import (
 	"bytes"
 	"encoding/json"
+	"github.com/gorilla/sessions"
 	"github.com/stretchr/testify/assert"
 	"net/http"
 	"net/http/httptest"
@@ -12,7 +13,7 @@ import (
 )
 
 func TestServer_handleUsersCreate(t *testing.T) {
-	s := newServer(testnlab.New())
+	s := newServer(testnlab.New(), sessions.NewCookieStore([]byte("secret")))
 	testCases := []struct {
 		name         string
 		payload      interface{}
@@ -65,7 +66,7 @@ func TestServer_HandleSessionsCreate(t *testing.T) {
 	u := model.TestUser(t)
 	nlab := testnlab.New()
 	nlab.User().Create(u)
-	s := newServer(nlab)
+	s := newServer(nlab, sessions.NewCookieStore([]byte("secret")))
 	testCases := []struct {
 		name         string
 		payload      interface{}
