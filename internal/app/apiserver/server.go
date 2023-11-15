@@ -4,10 +4,15 @@ import (
 	"encoding/json"
 	"errors"
 	"github.com/gorilla/mux"
+	"github.com/gorilla/sessions"
 	"github.com/sirupsen/logrus"
 	"net/http"
 	"rest-api/internal/app/model"
 	"rest-api/internal/app/nlab"
+)
+
+const (
+	sessionName = "miniapiserver"
 )
 
 var (
@@ -15,16 +20,18 @@ var (
 )
 
 type server struct {
-	router *mux.Router
-	logger *logrus.Logger
-	nlab   nlab.Nlab
+	router      *mux.Router
+	logger      *logrus.Logger
+	nlab        nlab.Nlab
+	sessionNlab sessions.Store
 }
 
-func newServer(nlab nlab.Nlab) *server {
+func newServer(nlab nlab.Nlab, sessionNlab sessions.Store) *server {
 	s := &server{
-		router: mux.NewRouter(),
-		logger: logrus.New(),
-		nlab:   nlab,
+		router:      mux.NewRouter(),
+		logger:      logrus.New(),
+		nlab:        nlab,
+		sessionNlab: sessionNlab,
 	}
 	s.configureRouter()
 	return s
@@ -83,6 +90,18 @@ func (s *server) handleSessionsCreate() http.HandlerFunc {
 		u, err := s.nlab.User().FindByLogin(req.Login)
 		if err != nil || !u.ComparePassord(req.Password) {
 			s.error(w, r, http.StatusUnauthorized, errIncorrectLoginOrPassword)
+			return
+		}
+
+		session, err := s.sessionNlab.Get(r, sessionName)
+		if err != nil {
+			s.error(w, r, http.StatusInternalServerError, err)
+			return
+		}
+
+		session.Values["user_id"] = u.ID
+		if err := s.sessionNlab.Save(r, w, session); err != nil {
+			s.error(w, r, http.StatusInternalServerError, err)
 			return
 		}
 
