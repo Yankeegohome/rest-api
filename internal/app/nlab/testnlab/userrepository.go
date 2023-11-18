@@ -7,7 +7,7 @@ import (
 
 type UserRepository struct {
 	nlab  *Nlab
-	users map[string]*model.User
+	users map[int]*model.User
 }
 
 func (r *UserRepository) Create(u *model.User) error {
@@ -17,13 +17,24 @@ func (r *UserRepository) Create(u *model.User) error {
 	if err := u.BeforeCreate(); err != nil {
 		return err
 	}
-	r.users[u.Login] = u
-	u.ID = len(r.users)
+	u.ID = len(r.users) + 1
+	r.users[u.ID] = u
 	return nil
 }
 
 func (r *UserRepository) FindByLogin(login string) (*model.User, error) {
-	u, ok := r.users[login]
+	for _, u := range r.users {
+		if u.Login == login {
+			return u, nil
+		}
+
+	}
+	return nil, nlab.ErrRecordNotFound
+
+}
+
+func (r *UserRepository) Find(id int) (*model.User, error) {
+	u, ok := r.users[id]
 	if !ok {
 		return nil, nlab.ErrRecordNotFound
 	}

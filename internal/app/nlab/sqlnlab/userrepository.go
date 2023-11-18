@@ -44,3 +44,22 @@ func (r *UserRepository) FindByLogin(login string) (*model.User, error) {
 	}
 	return u, nil
 }
+
+func (r *UserRepository) Find(id int) (*model.User, error) {
+	u := &model.User{}
+	if err := r.nlab.db.QueryRow(
+		"select id, login, text, pass from nlab.usr where id = $1",
+		id,
+	).Scan(
+		&u.ID,
+		&u.Login,
+		&u.Text,
+		&u.Pass,
+	); err != nil {
+		if err == sql.ErrNoRows {
+			return nil, nlab.ErrRecordNotFound
+		}
+		return nil, err
+	}
+	return u, nil
+}
