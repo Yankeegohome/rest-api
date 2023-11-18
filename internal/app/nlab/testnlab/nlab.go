@@ -19,7 +19,7 @@ func (n *Nlab) User() nlab.UserRepository {
 	}
 	n.userRepository = &UserRepository{
 		nlab:  n,
-		users: make(map[string]*model.User),
+		users: make(map[int]*model.User),
 	}
 	return n.userRepository
 }
