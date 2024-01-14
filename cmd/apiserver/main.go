@@ -12,6 +12,12 @@ import (
 	"rest-api/internal/config"
 )
 
+const (
+	envLocal = "local"
+	envDev   = "dev"
+	envProd  = "prod"
+)
+
 var (
 	configPath string
 )
